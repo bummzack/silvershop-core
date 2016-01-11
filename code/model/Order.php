@@ -37,7 +37,9 @@ class Order extends DataObject {
 		'Notes' => 'Text',
 		'IPAddress' => 'Varchar(15)',
 		//separate shipping
-		'SeparateBillingAddress' => 'Boolean'
+		'SeparateBillingAddress' => 'Boolean',
+        // keep track of customer locale
+        'Locale' => 'DBLocale'
 	);
 
 	private static $has_one = array(
@@ -510,6 +512,10 @@ class Order extends DataObject {
 		if(!$this->getField("Reference") && in_array($this->Status, self::$placed_status)){
 			$this->generateReference();
 		}
+
+        if(!$this->getField('Locale') && in_array($this->Status, self::$placed_status)){
+            $this->Locale = ShopTools::get_current_locale();
+        }
 	}
 
 	/**
