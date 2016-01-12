@@ -28,6 +28,11 @@ class ShopTools{
 
     public static function install_locale($locale)
     {
+        // If the locale isn't given, silently fail (there might be carts that still have locale set to null)
+        if(empty($locale)){
+            return;
+        }
+
         if(class_exists('Translatable')){
             Translatable::set_current_locale($locale);
         } else if(class_exists('Fluent')){
