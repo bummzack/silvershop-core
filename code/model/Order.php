@@ -513,7 +513,9 @@ class Order extends DataObject {
 			$this->generateReference();
 		}
 
-        if(!$this->getField('Locale') && in_array($this->Status, self::$placed_status)){
+        // While the order is unfinished/cart, always store the current locale with the order.
+        // We do this everytime an order is saved, because the user might change locale (language-switch).
+        if($this->Status == 'Cart'){
             $this->Locale = ShopTools::get_current_locale();
         }
 	}

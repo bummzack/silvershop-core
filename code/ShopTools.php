@@ -32,10 +32,19 @@ class ShopTools{
             Translatable::set_current_locale($locale);
         } else if(class_exists('Fluent')){
             Fluent::set_persist_locale($locale);
-            Fluent::install_locale($locale, false);
-        } else {
-            i18n::set_locale($locale);
         }
+
+        // Do something like Fluent does to install the locale
+        i18n::set_locale($locale);
+
+        // LC_NUMERIC causes SQL errors for some locales (comma as decimal indicator) so skip
+        foreach (array(LC_COLLATE, LC_CTYPE, LC_MONETARY, LC_TIME) as $category) {
+            setlocale($category, "{$locale}.UTF-8", $locale);
+        }
+        // Get date/time formats from Zend
+        require_once 'Zend/Date.php';
+        i18n::config()->date_format = Zend_Locale_Format::getDateFormat($locale);
+        i18n::config()->time_format = Zend_Locale_Format::getTimeFormat($locale);
     }
 
 }
