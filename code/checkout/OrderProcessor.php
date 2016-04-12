@@ -1,5 +1,9 @@
 <?php
 
+use SilverStripe\Omnipay\GatewayInfo;
+use SilverStripe\Omnipay\Service\ServiceFactory;
+use SilverStripe\Omnipay\Service\ServiceResponse;
+
 /**
  * Handles tasks to be performed on orders, particularly placing and processing/fulfilment.
  * Placing, Emailing Reciepts, Status Updates, Printing, Payments - things you do with a completed order.
@@ -60,7 +64,7 @@ class OrderProcessor
      * Create a payment model, and provide link to redirect to external gateway,
      * or redirect to order link.
      *
-     * @return string - url for redirection after payment has been made
+     * @return ServiceResponse|null
      */
     public function makePayment($gateway, $gatewaydata = array())
     {
@@ -68,24 +72,46 @@ class OrderProcessor
         $payment = $this->createPayment($gateway);
         if (!$payment) {
             //errors have been stored.
-            return false;
+            return null;
         }
 
-        // Create a purchase service, and set the user-facing success URL for redirects
-        $service = PurchaseService::create($payment)
-            ->setReturnUrl($this->getReturnUrl());
+        // Create a payment service, by using the Service Factory. This will automatically choose an
+        // AuthorizeService or PurchaseService, depending on Gateway configuration.
+        // Set the user-facing success URL for redirects
+        /** @var ServiceFactory $factory */
+        $factory = ServiceFactory::create();
+        $service = $factory->getService($payment, ServiceFactory::INTENT_PAYMENT);
+        $service->setReturnUrl($this->getReturnUrl());
 
-        // Process payment, get the result back
-        $response = $service->purchase($this->getGatewayData($gatewaydata));
-        if (GatewayInfo::isManual($gateway)) {
-            //don't complete the payment at this stage, if payment is manual
+        // Initiate payment, get the result back
+        try {
+            $serviceResponse = $service->initiate($this->getGatewayData($gatewaydata));
+        } catch (SilverStripe\Omnipay\Exception\Exception $ex){
+            // error out when an exception occurs
+            $this->error($ex->getMessage());
+            return null;
+        }
+
+        // Check if the service response itself contains an error
+        if($serviceResponse->isError()){
+            if($opResponse = $serviceResponse->getOmnipayResponse()){
+                $this->error($opResponse->getMessage());
+            } else {
+                $this->error('An unspecified payment error occurred. Please check the payment messages.');
+            }
+
+            return $serviceResponse;
+        }
+
+        // If the payment isn't captured (eg. complete) yet, we need to place the order at this stage.
+        if($serviceResponse->getPayment()->Status != 'Captured'){
             $this->placeOrder();
         }
 
-        // For an OFFSITE payment, response will now contain a redirect
-        // For an ONSITE payment, ShopPayment::onCapture will have been called, which will have called completePayment
+        // For an OFFSITE payment, serviceResponse will now contain a redirect
+        // For an ONSITE payment, ShopPayment::onCaptured will have been called, which will have called completePayment
 
-        return $response;
+        return $serviceResponse;
     }
 
     /**

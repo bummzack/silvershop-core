@@ -1,5 +1,7 @@
 <?php
 
+use SilverStripe\Omnipay\GatewayInfo;
+
 class PaymentForm extends CheckoutForm
 {
     /**
@@ -119,17 +121,10 @@ class PaymentForm extends CheckoutForm
         );
 
         $response = null;
-        if ($paymentResponse) {
-            if ($this->controller->hasMethod('processPaymentResponse')) {
-                $response = $this->controller->processPaymentResponse($paymentResponse, $form);
-            } else {
-                if ($paymentResponse->isRedirect() || $paymentResponse->isSuccessful()) {
-                    $response = $paymentResponse->redirect();
-                } else {
-                    $form->sessionMessage($paymentResponse->getMessage(), 'bad');
-                    $response = $this->controller->redirectBack();
-                }
-            }
+        if ($this->controller->hasMethod('processPaymentResponse')) {
+            $response = $this->controller->processPaymentResponse($paymentResponse, $form);
+        } else if ($paymentResponse && !$paymentResponse->isError()) {
+            $response = $paymentResponse->redirectOrRespond();
         } else {
             $form->sessionMessage($this->orderProcessor->getError(), 'bad');
             $response = $this->controller->redirectBack();

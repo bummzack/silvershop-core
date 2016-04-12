@@ -1,5 +1,7 @@
 <?php
 
+use SilverStripe\Omnipay\Service\PaymentService;
+
 class ShopPaymentTest extends FunctionalTest
 {
     protected static $fixture_file  = array(
