@@ -75,10 +75,9 @@ class PaymentForm extends CheckoutForm
     public function submitpayment($data, $form)
     {
         $data = $form->getData();
-        if ($this->getSuccessLink()) {
-            $data['returnUrl'] = $this->getSuccessLink();
-        }
-        $data['cancelUrl'] = $this->getFailureLink() ? $this->getFailureLink() : $this->controller->Link();
+
+        $cancelUrl = $this->getFailureLink() ? $this->getFailureLink() : $this->controller->Link();
+
         $order = $this->config->getOrder();
 
         // final recalculation, before making payment
@@ -100,7 +99,7 @@ class PaymentForm extends CheckoutForm
                 $form->sessionMessage($this->orderProcessor->getError());
                 return $this->controller->redirectBack();
             }
-            $data['cancelUrl'] = $this->orderProcessor->getReturnUrl();
+            $cancelUrl = $this->orderProcessor->getReturnUrl();
         }
 
         // if we got here from checkoutSubmit and there's a namespaced OnsitePaymentCheckoutComponent
@@ -117,7 +116,9 @@ class PaymentForm extends CheckoutForm
         // This is where the payment is actually attempted
         $paymentResponse = $this->orderProcessor->makePayment(
             Checkout::get($order)->getSelectedPaymentMethod(false),
-            $data
+            $data,
+            $this->getSuccessLink(),
+            $cancelUrl
         );
 
         $response = null;

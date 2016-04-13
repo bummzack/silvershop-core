@@ -64,9 +64,15 @@ class OrderProcessor
      * Create a payment model, and provide link to redirect to external gateway,
      * or redirect to order link.
      *
+     * @param string $gateway the gateway to use
+     * @param array $gatewaydata the data that should be passed to the gateway
+     * @param string $successUrl (optional) return URL for successful payments.
+     *  If left blank, the default return URL will be used @see getReturnUrl
+     * @param string $cancelUrl (optional) return URL for cancelled/failed payments
+     *
      * @return ServiceResponse|null
      */
-    public function makePayment($gateway, $gatewaydata = array())
+    public function makePayment($gateway, $gatewaydata = array(), $successUrl = null, $cancelUrl = null)
     {
         //create payment
         $payment = $this->createPayment($gateway);
@@ -81,7 +87,13 @@ class OrderProcessor
         /** @var ServiceFactory $factory */
         $factory = ServiceFactory::create();
         $service = $factory->getService($payment, ServiceFactory::INTENT_PAYMENT);
-        $service->setReturnUrl($this->getReturnUrl());
+        
+        $service->setReturnUrl($successUrl ? $successUrl : $this->getReturnUrl());
+
+        // Explicitly set the cancel URL
+        if ($cancelUrl) {
+            $service->setCancelUrl($cancelUrl);
+        }
 
         // Initiate payment, get the result back
         try {

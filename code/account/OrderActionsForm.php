@@ -111,8 +111,7 @@ class OrderActionsForm extends Form
             if (!GatewayInfo::isManual($gateway)) {
                 /** @var OrderProcessor $processor */
                 $processor = OrderProcessor::create($this->order);
-                $data['cancelUrl'] = $processor->getReturnUrl();
-                $response = $processor->makePayment($gateway, $data);
+                $response = $processor->makePayment($gateway, $data, $processor->getReturnUrl());
                 if($response && !$response->isError()){
                     return $response->redirectOrRespond();
                 } else {
