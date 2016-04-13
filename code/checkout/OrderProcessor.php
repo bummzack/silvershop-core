@@ -87,7 +87,7 @@ class OrderProcessor
         /** @var ServiceFactory $factory */
         $factory = ServiceFactory::create();
         $service = $factory->getService($payment, ServiceFactory::INTENT_PAYMENT);
-        
+
         $service->setReturnUrl($successUrl ? $successUrl : $this->getReturnUrl());
 
         // Explicitly set the cancel URL
@@ -98,15 +98,15 @@ class OrderProcessor
         // Initiate payment, get the result back
         try {
             $serviceResponse = $service->initiate($this->getGatewayData($gatewaydata));
-        } catch (SilverStripe\Omnipay\Exception\Exception $ex){
+        } catch (SilverStripe\Omnipay\Exception\Exception $ex) {
             // error out when an exception occurs
             $this->error($ex->getMessage());
             return null;
         }
 
         // Check if the service response itself contains an error
-        if($serviceResponse->isError()){
-            if($opResponse = $serviceResponse->getOmnipayResponse()){
+        if ($serviceResponse->isError()) {
+            if ($opResponse = $serviceResponse->getOmnipayResponse()) {
                 $this->error($opResponse->getMessage());
             } else {
                 $this->error('An unspecified payment error occurred. Please check the payment messages.');
@@ -115,8 +115,8 @@ class OrderProcessor
             return $serviceResponse;
         }
 
-        // If the payment isn't captured (eg. complete) yet, we need to place the order at this stage.
-        if($serviceResponse->getPayment()->Status != 'Captured'){
+        // The order should be placed if the response isn't a redirect and if the payment isn't captured yet
+        if (!$serviceResponse->isRedirect() && $serviceResponse->getPayment()->Status != 'Captured') {
             $this->placeOrder();
         }
 
