@@ -48,7 +48,7 @@ class OrderActionsForm extends Form
                     )
                 );
                 $outstandingfield = Currency::create();
-                $outstandingfield->setValue($order->TotalOutstanding());
+                $outstandingfield->setValue($order->TotalOutstanding(true));
                 $fields->push(
                     LiteralField::create(
                         "Outstanding",

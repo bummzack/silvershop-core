@@ -179,7 +179,7 @@ class OrderProcessor
             return false;
         }
         $payment = Payment::create()
-            ->init($gateway, $this->order->TotalOutstanding(), ShopConfig::get_base_currency());
+            ->init($gateway, $this->order->TotalOutstanding(true), ShopConfig::get_base_currency());
         $this->order->Payments()->add($payment);
         return $payment;
     }
@@ -204,8 +204,8 @@ class OrderProcessor
             }
 
             if (
-                // Standard order
-                ($this->order->GrandTotal() > 0 && $this->order->TotalOutstanding() <= 0)
+                // Standard order. Only change to 'Paid' once all payments are captured
+                ($this->order->GrandTotal() > 0 && $this->order->TotalOutstanding(false) <= 0)
                 // Zero-dollar order (e.g. paid with loyalty points)
                 || ($this->order->GrandTotal() == 0 && Order::config()->allow_zero_order_total)
             ) {
@@ -277,7 +277,7 @@ class OrderProcessor
             ShoppingCart::singleton()->clear();
         }
         //update status
-        if ($this->order->TotalOutstanding()) {
+        if ($this->order->TotalOutstanding(false)) {
             $this->order->Status = 'Unpaid';
         } else {
             $this->order->Status = 'Paid';
