@@ -307,33 +307,61 @@ class OrderProcessor
                 $this->order->IPAddress = $request->getIP(); //record client IP
             }
         }
-        //re-write all attributes and modifiers to make sure they are up-to-date before they can't be changed again
-        $items = $this->order->Items();
-        if ($items->exists()) {
-            foreach ($items as $item) {
-                $item->onPlacement();
-                $item->write();
-            }
+
+        if (DB::get_conn()->supportsTransactions()) {
+            DB::get_conn()->transactionStart();
         }
-        $modifiers = $this->order->Modifiers();
-        if ($modifiers->exists()) {
-            foreach ($modifiers as $modifier) {
-                $modifier->write();
+
+        // Add an error handler that throws an exception upon error, so that we can catch errors as exceptions
+        // in the following block.
+        set_error_handler(function ($severity, $message, $file, $line) {
+            throw new ErrorException($message, 0, $severity, $file, $line);
+        }, E_WARNING & E_USER_WARNING & E_ERROR & E_USER_ERROR & E_RECOVERABLE_ERROR);
+
+        try {
+            //re-write all attributes and modifiers to make sure they are up-to-date before they can't be changed again
+            $items = $this->order->Items();
+            if ($items->exists()) {
+                foreach ($items as $item) {
+                    $item->onPlacement();
+                    $item->write();
+                }
             }
+            $modifiers = $this->order->Modifiers();
+            if ($modifiers->exists()) {
+                foreach ($modifiers as $modifier) {
+                    $modifier->write();
+                }
+            }
+            //add member to order & customers group
+            if ($member = Member::currentUser()) {
+                if (!$this->order->MemberID) {
+                    $this->order->MemberID = $member->ID;
+                }
+                $cgroup = ShopConfig::current()->CustomerGroup();
+                if ($cgroup->exists()) {
+                    $member->Groups()->add($cgroup);
+                }
+            }
+            //allow decorators to do stuff when order is saved.
+            $this->order->extend('onPlaceOrder');
+            $this->order->write();
+        } catch (Exception $ex) {
+            // Rollback the transaction if an error occurred
+            if (DB::get_conn()->supportsTransactions()) {
+                DB::get_conn()->transactionRollback();
+            }
+            $this->error($ex->getMessage());
+            return false;
+        } finally {
+            // restore the error handler, no matter what
+            restore_error_handler();
         }
-        //add member to order & customers group
-        if ($member = Member::currentUser()) {
-            if (!$this->order->MemberID) {
-                $this->order->MemberID = $member->ID;
-            }
-            $cgroup = ShopConfig::current()->CustomerGroup();
-            if ($cgroup->exists()) {
-                $member->Groups()->add($cgroup);
-            }
+
+        // Everything went through fine, complete the transaction
+        if (DB::get_conn()->supportsTransactions()) {
+            DB::get_conn()->transactionEnd();
         }
-        //allow decorators to do stuff when order is saved.
-        $this->order->extend('onPlaceOrder');
-        $this->order->write();
 
         //send confirmation if configured and receipt hasn't been sent
         if (
