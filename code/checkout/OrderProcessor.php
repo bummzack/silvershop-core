@@ -353,7 +353,8 @@ class OrderProcessor
         //remove from session
         $cart = ShoppingCart::curr();
         if ($cart && $cart->ID == $this->order->ID) {
-            ShoppingCart::singleton()->clear();
+            // clear the cart, but don't write the order in the process (order is finalized and should NOT be overwritten)
+            ShoppingCart::singleton()->clear(false);
         }
 
         //send confirmation if configured and receipt hasn't been sent

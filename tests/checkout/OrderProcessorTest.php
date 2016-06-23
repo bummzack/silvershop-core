@@ -201,7 +201,7 @@ class OrderProcessorTest extends SapphireTest
         );
 
         Order::remove_extension('OrderProcessorTest_PlaceFailExtension');
-        $this->shoppingcart->clear();
+        $this->shoppingcart->clear(false);
     }
 
     public function testMemberOrder()
@@ -371,19 +371,18 @@ class OrderProcessorTest_CustomOrderItem extends Product_OrderItem implements Te
 // Extension to Order that will allow us a failed placement
 class OrderProcessorTest_PlaceFailExtension extends DataExtension implements TestOnly
 {
-    private static $willFail = false;
+    private $willFail = false;
 
     public function onPlaceOrder()
     {
         // flag this order to fail
-        self::$willFail = true;
+        $this->willFail = true;
     }
 
     public function onAfterWrite()
     {
         // fail after writing, so that we can test if DB rollback works as intended
-        if(self::$willFail){
-            self::$willFail = false;
+        if($this->willFail){
             user_error('Order failed');
         }
     }
