@@ -27,25 +27,52 @@ class OrderTotalCalculator
         if (!is_array($modifierclasses) || empty($modifierclasses)) {
             return $runningtotal;
         }
-        foreach ($modifierclasses as $ClassName) {
-            if ($modifier = $this->getModifier($ClassName)) {
-                $modifier->Sort = $sort;
-                $runningtotal = $modifier->modify($runningtotal);
-                if ($modifier->isChanged()) {
-                    $modifier->write();
+
+        if (DB::get_conn()->supportsTransactions()) {
+            DB::get_conn()->transactionStart();
+        }
+
+        set_error_handler(function ($severity, $message, $file, $line) {
+            throw new ErrorException($message, 0, $severity, $file, $line);
+        }, E_ALL & ~(E_STRICT | E_NOTICE));
+
+        try {
+            foreach ($modifierclasses as $ClassName) {
+                if ($modifier = $this->getModifier($ClassName)) {
+                    $modifier->Sort = $sort;
+                    $runningtotal = $modifier->modify($runningtotal);
+                    if ($modifier->isChanged()) {
+                        $modifier->write();
+                    }
+                }
+                $sort++;
+            }
+            //clear old modifiers out
+            if ($existingmodifiers) {
+                foreach ($existingmodifiers as $modifier) {
+                    if (!in_array($modifier->ClassName, $modifierclasses)) {
+                        $modifier->delete();
+                        $modifier->destroy();
+                    }
                 }
             }
-            $sort++;
-        }
-        //clear old modifiers out
-        if ($existingmodifiers) {
-            foreach ($existingmodifiers as $modifier) {
-                if (!in_array($modifier->ClassName, $modifierclasses)) {
-                    $modifier->delete();
-                    $modifier->destroy();
-                }
+        } catch (Exception $ex) {
+            // Rollback the transaction if an error occurred
+            if (DB::get_conn()->supportsTransactions()) {
+                DB::get_conn()->transactionRollback();
             }
+            // throw the exception after rollback
+            throw $ex;
+        } finally {
+            // restore the error handler, no matter what
+            restore_error_handler();
         }
+
+        // Everything went through fine, complete the transaction
+        if (DB::get_conn()->supportsTransactions()) {
+            DB::get_conn()->transactionEnd();
+        }
+
         //prevent negative sales from ever occurring
         if ($runningtotal < 0) {
             SS_Log::log(
