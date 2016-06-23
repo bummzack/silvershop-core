@@ -282,10 +282,8 @@ class OrderProcessor
         // recalculate order to be sure we have the correct total
         $this->order->calculate();
 
-        //remove from session
-        $cart = ShoppingCart::curr();
-        if ($cart && $cart->ID == $this->order->ID) {
-            ShoppingCart::singleton()->clear();
+        if (DB::get_conn()->supportsTransactions()) {
+            DB::get_conn()->transactionStart();
         }
 
         //update status
@@ -301,15 +299,11 @@ class OrderProcessor
             }
         }
 
-        if (DB::get_conn()->supportsTransactions()) {
-            DB::get_conn()->transactionStart();
-        }
-
         // Add an error handler that throws an exception upon error, so that we can catch errors as exceptions
         // in the following block.
         set_error_handler(function ($severity, $message, $file, $line) {
             throw new ErrorException($message, 0, $severity, $file, $line);
-        }, E_WARNING & E_USER_WARNING & E_ERROR & E_USER_ERROR & E_RECOVERABLE_ERROR);
+        }, E_ALL & ~(E_STRICT | E_NOTICE));
 
         try {
             //re-write all attributes and modifiers to make sure they are up-to-date before they can't be changed again
@@ -354,6 +348,12 @@ class OrderProcessor
         // Everything went through fine, complete the transaction
         if (DB::get_conn()->supportsTransactions()) {
             DB::get_conn()->transactionEnd();
+        }
+
+        //remove from session
+        $cart = ShoppingCart::curr();
+        if ($cart && $cart->ID == $this->order->ID) {
+            ShoppingCart::singleton()->clear();
         }
 
         //send confirmation if configured and receipt hasn't been sent
