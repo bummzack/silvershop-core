@@ -644,8 +644,11 @@ class Order extends DataObject
         }
 
         // perform status transition
-        if($this->isInDB() && $this->isChanged('Status')){
-            $this->statusTransition($this->original['Status'], $this->Status);
+        if ($this->isInDB() && $this->isChanged('Status')) {
+            $this->statusTransition(
+                empty($this->original['Status']) ? 'Cart' : $this->original['Status'],
+                $this->Status
+            );
         }
 
         // While the order is unfinished/cart, always store the current locale with the order.
@@ -663,9 +666,9 @@ class Order extends DataObject
     protected function statusTransition($fromStatus, $toStatus)
     {
         // Add extension hook to react to order status transitions.
-        $this->extend('onStatusTransition', $fromStatus, $toStatus);
+        $this->extend('onStatusChange', $fromStatus, $toStatus);
 
-        if (in_array($fromStatus, $this->config()->payable_status) && $toStatus == 'Paid' && !$this->Paid) {
+        if ($toStatus == 'Paid' && !$this->Paid) {
             $this->Paid = SS_Datetime::now()->Rfc2822();
             foreach ($this->Items() as $item) {
                 $item->onPayment();
