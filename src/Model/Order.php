@@ -387,9 +387,9 @@ class Order extends DataObject
      *
      * @inheritdoc
      */
-    public function getComponents($componentName)
+    public function getComponents($componentName, $id = null)
     {
-        $components = parent::getComponents($componentName);
+        $components = parent::getComponents($componentName, $id);
         if ($componentName === 'Items' && get_class($components) !== UnsavedRelationList::class) {
             $query = $components->dataQuery();
             $components = OrderItemList::create(OrderItem::class, 'OrderID');
