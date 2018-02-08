@@ -111,6 +111,8 @@ fr:
     CustomerGroup: "Groupe pour ajouter les nouveaux clients à"
     DefaultImage: "Image de produit par défaut"
     TermsPage: "Page des conditions générales"
+  SilverShop\Forms:
+    FIELDISREQUIRED: "{name} requis"
   SilverShop\Forms\CartForm:
     REMOVED_ITEMS: "{count} articles supprimés."
     UPDATED_ITEMS: "{count} articles mis à jour"

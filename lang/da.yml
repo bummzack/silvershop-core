@@ -111,6 +111,8 @@ da:
     CustomerGroup: "Tilføj nye kunder til denne gruppe"
     DefaultImage: "Standard produkt billede"
     TermsPage: "Side med handelsbetingelser"
+  SilverShop\Forms:
+    FIELDISREQUIRED: '{name} is required'
   SilverShop\Forms\CartForm:
     REMOVED_ITEMS: "Fjernede {count} varer."
     UPDATED_ITEMS: "Opdaterede {count} varer."

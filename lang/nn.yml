@@ -111,6 +111,8 @@ nn:
     CustomerGroup: "Gruppe for å legge nye kundar i"
     DefaultImage: "Standard produktbilete"
     TermsPage: Vilkårside
+  SilverShop\Forms:
+    FIELDISREQUIRED: '{name} is required'
   SilverShop\Forms\CartForm:
     REMOVED_ITEMS: "Fjerna {count} produkt."
     UPDATED_ITEMS: "Oppdatert {count} produkt."

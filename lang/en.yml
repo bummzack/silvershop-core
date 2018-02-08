@@ -98,6 +98,8 @@ en:
     CustomerGroup: "Group to add new customers to"
     DefaultImage: "Default Product Image"
     TermsPage: "Terms and Conditions Page"
+  SilverShop\Forms:
+    FIELDISREQUIRED: '{name} is required'
   SilverShop\Forms\CartForm:
     REMOVED_ITEMS: "Removed {count} items."
     UPDATED_ITEMS: "Updated {count} items."

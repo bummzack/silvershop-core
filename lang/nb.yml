@@ -111,6 +111,8 @@ nb:
     CustomerGroup: "Gruppe for å legge nye kunder i"
     DefaultImage: "Standard produktbilde"
     TermsPage: "Vilkår og betalingsbetingelser side"
+  SilverShop\Forms:
+    FIELDISREQUIRED: "{name} er påkrevet"
   SilverShop\Forms\CartForm:
     REMOVED_ITEMS: "Fjernet {count} produkt."
     UPDATED_ITEMS: "Oppdater {count} produkt."
