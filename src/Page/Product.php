@@ -157,7 +157,7 @@ class Product extends Page implements Buyable
         $this->beforeUpdateCMSFields(
             function (FieldList $fields) use ($self) {
                 $fields->fieldByName('Root.Main.Title')
-                    ->setTitle(_t('Product.PageTitle', 'Product Title'));
+                    ->setTitle(_t(__CLASS__ . '.PageTitle', 'Product Title'));
 
                 $fields->addFieldsToTab(
                     'Root.Main', [

@@ -294,7 +294,7 @@ class Order extends DataObject
     {
         $values = array();
         foreach (singleton(Order::class)->dbObject('Status')->enumValues(false) as $value) {
-            $values[$value] = _t('Order.STATUS_' . strtoupper($value), $value);
+            $values[$value] = _t(__CLASS__ . '.STATUS_' . strtoupper($value), $value);
         }
         return $values;
     }
@@ -488,7 +488,7 @@ class Order extends DataObject
      */
     public function getStatusI18N()
     {
-        return _t('Order.STATUS_' . strtoupper($this->Status), $this->Status);
+        return _t(__CLASS__ . '.STATUS_' . strtoupper($this->Status), $this->Status);
     }
 
     /**
@@ -861,12 +861,12 @@ class Order extends DataObject
 
             // populate OrderStatusLog
             $log->Title = _t(
-                'ShopEmail.StatusChanged',
+                'SilverShop\ShopEmail.StatusChanged',
                 'Status for order #{OrderNo} changed to "{OrderStatus}"',
                 '',
                 ['OrderNo' => $this->Reference, 'OrderStatus' => $this->getStatusI18N()]
             );
-            $log->Note = _t('ShopEmail.StatusChange' . $this->Status . 'Note', $this->Status . 'Note');
+            $log->Note = _t('SilverShop\ShopEmail.StatusChange' . $this->Status . 'Note', $this->Status . 'Note');
             $log->OrderID = $this->ID;
             OrderEmailNotifier::create($this)->sendStatusChange($log->Title, $log->Note);
             $log->SentToCustomer = true;
