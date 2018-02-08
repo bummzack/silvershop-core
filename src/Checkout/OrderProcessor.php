@@ -185,7 +185,7 @@ class OrderProcessor
         if (!GatewayInfo::isSupported($gateway)) {
             $this->error(
                 _t(
-                    "PaymentProcessor.InvalidGateway",
+                    __CLASS__ . ".InvalidGateway",
                     "`{gateway}` isn't a valid payment gateway.",
                     'gateway is the name of the payment gateway',
                     array('gateway' => $gateway)
