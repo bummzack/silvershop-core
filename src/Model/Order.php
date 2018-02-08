@@ -14,6 +14,7 @@ use SilverShop\Page\AccountPage;
 use SilverShop\Page\CheckoutPage;
 use SilverShop\ShopTools;
 use SilverStripe\Control\Controller;
+use SilverStripe\Control\Director;
 use SilverStripe\Dev\Debug;
 use SilverStripe\Forms\CheckboxSetField;
 use SilverStripe\Forms\DateField;
@@ -876,9 +877,11 @@ class Order extends DataObject
 
     public function debug()
     {
-        // Temporarily disabled.
-        // TODO: Reactivate when the following issue got fixed: https://github.com/silverstripe/silverstripe-framework/issues/7827
-        return '';
+        if (Director::is_cli()) {
+            // Temporarily disabled.
+            // TODO: Reactivate when the following issue got fixed: https://github.com/silverstripe/silverstripe-framework/issues/7827
+            return '';
+        }
 
         $val = "<div class='order'><h1>" . static::class ."</h1>\n<ul>\n";
         if ($this->record) {
